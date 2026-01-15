@@ -94,12 +94,14 @@ public interface TurretIO {
   class TurretIOInputs {
     public double positionDeg = 0.0;
     public double velocityDegPerSec = 0.0;
+    public double statorCurrent = 0.0;
 
     public double appliedVolts = 0.0;
     public boolean motorConnected = false;
   }
 
-  default void updateInputs(TurretIOInputs inputs) {}
+  default void updateInputs(TurretIOInputs inputs) {
+  }
 
   default void setVoltage(double volts) {}
   default void setPosition(double angleDeg) {}
@@ -117,22 +119,59 @@ The real turret implementation uses **CTRE Phoenix 6 position control**.
 ```java
 public class TurretReal implements TurretIO {
 
-  private final TalonFX motor = new TalonFX(20);
+  private final TalonFX turretMotor = new TalonFX(20);
   private final PositionVoltage positionRequest = new PositionVoltage(0);
+  private StatusSignal<Double> turretMotorStatorCurrent;
+  private StatusSignal<Double> turretMotorVelocityRPS;
+  private StatusSignal<Double> turretMotorPositionDegrees;
+  private StatusSignal<Double> turretMotorVolts;
 
   public TurretReal() {
+    // Top motor configurations
+    TalonFXConfiguration turretConfigs = new TalonFXConfiguration();
+    turretMotor.getConfigurator().apply(turretConfigs); // reset to default
+    turretConfigs.MotorOutput.Inverted = TurretConstants.intakeMotorInvert;
+    turretConfigs.MotorOutput.NeutralMode = TurretConstants.intakeMotorBrakeMode;
+    turretConfigs.Slot0.kP = TurretConstants.kTopP;
+    turretConfigs.Slot0.kV = TurretConstants.kTopV;
+    turretConfigs.Slot0.kS = TurretConstants.kTopS;
+    turretConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    turretConfigs.CurrentLimits.StatorCurrentLimit = TurretConstants.topCurrentLimit;
+    topMotor.getConfigurator().apply(turretConfigs);
+    // Apply to signals
+    turretMotorStatorCurrent = topMotor.getStatorCurrent();
+    turretMotorPositionDegrees = topMotor.getVelocity().getValue() * 360.0;
+    turretMotorVelocityRPS = topMotor.getStatorCurrent();
+    turretMotorVolts = topMotor.getMotorVoltage();
+    // Set polling frequency and optimizations
+    BaseStatusSignal.setUpdateFrequencyForAll(50, turretMotorStatorCurrent, turretMotorPositionDegrees);
+    turretMotor.optimizeBusUtilization();
   }
+
+
 
   @Override
   public void updateInputs(TurretIOInputs inputs) {
+    BaseStatusSignal.refreshAll(
+        turretMotorStatorCurrent,
+    turretMotorVolts,
+        turretMotorPositionDegrees,turretMotorVelocityRPS);
+
+    inputs.positionDeg = turretMotorPositionDegrees.getValueAsDouble()* 360.0;
+    inputs.velocityDegPerSec = turretMotorVelocityRPS.getValueAsDouble() * 360.0;
+    inputs.statorCurrent = turretMotorStatorCurrent.getValueAsDouble();
+    inputs.appliedVolts = turretMotorVolts.getValueAsDouble();;
+    inputs.motorConnected = motor.isConnected();
   }
 
   @Override
   public void setPosition(double angleDeg) {
+    turretMotor.setControl(positionRequest.withPosition(angleDeg / 360.0));
   }
 
   @Override
   public void stop() {
+    turretMotor.stopMotor();
   }
 }
 ```
@@ -159,14 +198,23 @@ public class TurretSim implements TurretIO {
 
   @Override
   public void updateInputs(TurretIOInputs inputs) {
-    sim.update(0.02)l  }
+    sim.update(0.02);
+    inputs.positionDeg = Units.radiansToDegrees(sim.getAngleRads());
+    inputs.velocityDegPerSec = Units.radiansToDegrees(sim.getVelocityRadPerSec());
+    inputs.statorCurrent = 0;
+    inputs.appliedVolts = appliedVolts;
+    inputs.motorConnected = true;
+  }
 
   @Override
   public void setVoltage(double volts) {
+    appliedVolts = volts;
+    sim.setInputVoltage(volts);
   }
 
   @Override
   public void stop() {
+    setVoltage(0);
   }
 }
 ```
@@ -194,15 +242,31 @@ public class Turret extends SubsystemBase {
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Turret", inputs);
+
+    Logger.recordOutput("Turret/State", desiredState.name());
+    Logger.recordOutput("Turret/ManualMode", manualMode);
+
+    if (manualMode) {
+      io.setVoltage(manualVolts);
+    } else {
+      io.setPosition(desiredState.angleDeg);
+    }
   }
 
   public void setManualVoltage(double volts) {
+        manualMode = true;
+    manualVolts = volts;
   }
 
   public void exitManualMode() {
+      manualMode = false;
   }
 
   public void setState(TurretState state) {
+        manualMode = false;
+    desiredState = state;
   }
 
   public boolean atSetpoint() {

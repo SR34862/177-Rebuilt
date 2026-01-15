@@ -96,14 +96,11 @@ public interface IntakeIO {
 
   @AutoLog
   class IntakeIOInputs {
-    public double leftVelocityRPM = 0.0;
-    public double rightVelocityRPM = 0.0;
+    public double intakeVelocityRPM = 0.0;
 
-    public double leftAppliedVolts = 0.0;
-    public double rightAppliedVolts = 0.0;
+    public double intakeAppliedVolts = 0.0;
 
-    public boolean leftConnected = false;
-    public boolean rightConnected = false;
+    public boolean intakeConnected = false;
   }
 
   default void updateInputs(IntakeIOInputs inputs) {}
@@ -122,21 +119,45 @@ public interface IntakeIO {
 public class IntakeReal implements IntakeIO {
 
   private final TalonFX intakeMotor = new TalonFX(30);
-
+  private final VelocityRequest requestTop = new VelocityRequest(0);
+  private StatusSignal<Double> intakeMotorStatorCurrent;
+  private StatusSignal<Double> intakeMotorVelocityRPS;
   public IntakeReal() {
-    intakeMotor.getConfigurator().apply(IntakeConfigs.left());
+    // Top motor configurations
+    TalonFXConfiguration intakeConfigs = new TalonFXConfiguration();
+    intakeMotor.getConfigurator().apply(intakeConfigs); // reset to default
+    intakeConfigs.MotorOutput.Inverted = IntakeConstants.intakeMotorInvert;
+    intakeConfigs.MotorOutput.NeutralMode = IntakeConstants.intakeMotorBrakeMode;
+    intakeConfigs.Slot0.kP = IntakeConstants.kTopP;
+    intakeConfigs.Slot0.kV = IntakeConstants.kTopV;
+    intakeConfigs.Slot0.kS = IntakeConstants.kTopS;
+    intakeConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    intakeConfigs.CurrentLimits.StatorCurrentLimit = IntakeConstants.topCurrentLimit;
+    topMotor.getConfigurator().apply(intakeConfigs);
+    // Apply to signals
+    intakeMotorStatorCurrent = topMotor.getStatorCurrent();
+    intakeMotorVelocityRPS = topMotor.getVelocity();
+    // Set polling frequency and optimizations
+    BaseStatusSignal.setUpdateFrequencyForAll(50, intakeMotorStatorCurrent, intakeMotorVelocityRPS);
+    intakeMotor.optimizeBusUtilization();
+
   }
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    inputs.intakeVelocityRPM = intakeMotor.getVelocity().getValue() * 60.0;
+    inputs.intakeAppliedVolts = intakeMotor.getMotorVoltage().getValue();
+    inputs.intakeConnected = intakeMotor.isConnected();
   }
 
   @Override
   public void setIntakeVoltage(double volts) {
+    intakeMotor.setVoltage(volts);
   }
 
   @Override
   public void stop() {
+    intakeMotor.stopMotor();
   }
 }
 ```
@@ -155,14 +176,21 @@ public class IntakeSim implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    intakeSim.update(0.02);
+    inputs.intakeVelocityRPM = intakeSim.getAngularVelocityRPM();
+    inputs.intakeAppliedVolts = intakeVolts;
+    inputs.intakeConnected = true;
   }
 
   @Override
   public void setIntakeVoltage(double volts) {
+    intakeVolts = volts;
+    intakeSim.setInputVoltage(volts);
   }
 
   @Override
   public void stop() {
+    setIntakeVoltage(0);
   }
 }
 ```
@@ -196,12 +224,27 @@ public class Intake extends SubsystemBase {
 
   @Override
   public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake", inputs);
+
+    Logger.recordOutput("Intake/State", desiredState.name());
+    Logger.recordOutput("Intake/ManualMode", manualMode);
+
+    if (manualMode) {
+      io.setLeftVoltage(manualIntakeVolts);
+    } else {
+      io.setLeftVoltage(desiredState.intakeVolts);
+    }
   }
 
   public void setManualVoltage(double intakeVoltage) {
+    manualMode = true;
+    manualIntakeVolts = intakeVoltage;
   }
 
   public void setState(IntakeState state) {
+    manualMode = false;
+    desiredState = state;
   }
 }
 ```
