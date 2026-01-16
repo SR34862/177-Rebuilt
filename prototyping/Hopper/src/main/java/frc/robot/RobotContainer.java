@@ -25,6 +25,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 // import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.subystems.Hopper.Hopper;
+import frc.robot.subystems.Hopper.HopperReal;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -34,7 +36,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
  */
 public class RobotContainer {
   // Subsystems
-
+  private final Hopper m_Hopper = new Hopper(new HopperReal());
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
@@ -76,6 +78,7 @@ public class RobotContainer {
   private void configureButtonBindings() {
 
     // Default command, normal field-relative drive
+    
   }
 
   /**

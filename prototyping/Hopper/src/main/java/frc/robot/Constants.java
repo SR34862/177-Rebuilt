@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -28,5 +31,16 @@ public final class Constants {
 
         /** Replaying from a log file. */
         REPLAY
+    }
+
+    public static final class HopperConstants{
+
+        public static final InvertedValue intakeMotorInvert = InvertedValue.Clockwise_Positive;
+        public static final NeutralModeValue intakeMotorBrakeMode = NeutralModeValue.Brake;
+        public static final double kTopP = 0;
+        public static final double kTopV = 0;
+        public static final double kTopS = 0;
+        public static final double topCurrentLimit = 0;
+
     }
 }
