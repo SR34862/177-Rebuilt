@@ -25,6 +25,9 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 // import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.subsystems.Intake.Intake;
+import frc.robot.subsystems.Intake.IntakeIO;
+import frc.robot.subsystems.Intake.IntakeReal;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -34,7 +37,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
  */
 public class RobotContainer {
   // Subsystems
-
+  private final Intake intake;
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
@@ -47,13 +50,15 @@ public class RobotContainer {
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
+        intake = new Intake( new IntakeReal());
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
+        intake = new Intake( new IntakeIO(){});
         break;
-
       default:
         // Replayed robot, disable IO implementations
+        intake = new Intake( new IntakeIO(){});
         break;
     }
 

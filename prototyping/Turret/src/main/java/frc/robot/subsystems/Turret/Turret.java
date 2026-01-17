@@ -29,14 +29,8 @@ public class Turret extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
 
-        Logger.recordOutput("Turret/State", desiredState.name());
+        Logger.recordOutput("Turret/State", desiredState.getCurrentState());
         Logger.recordOutput("Turret/ManualMode", manualMode);
-
-        if (manualMode) {
-            io.setVoltage(manualVolts);
-        } else {
-            io.setPosition(manualPosition.getDegrees());
-        }
     }
 
     public void setManualVoltage(double volts) {

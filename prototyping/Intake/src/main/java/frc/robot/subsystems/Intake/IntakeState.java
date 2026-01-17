@@ -1,8 +1,8 @@
-package frc.robot.subystems.Hopper;
+package frc.robot.subsystems.Intake;
 
 import frc.robot.Constants;
 
-public class HopperState {
+public class IntakeState {
 
   public enum State {
     IDLE,
@@ -14,7 +14,7 @@ public class HopperState {
   private State currentState = State.IDLE;
   private double manualSpeed = 0.0;
 
-  /** Set the Hopper to a predefined state */
+  /** Set the intake to a predefined state */
   public void setState(State state) {
     this.currentState = state;
   }
@@ -28,9 +28,9 @@ public class HopperState {
   /** Returns the motor output based on the current state */
   public double getOutput() {
     return switch (currentState) {
-      case IDLE -> Constants.HopperConstants.idleHopperSpeed;
-      case FORWARD -> Constants.HopperConstants.intakeHopperSpeed;
-      case REVERSE -> Constants.HopperConstants.outtakeHopperSpeed;
+      case IDLE -> Constants.IntakeConstants.idleRollerSpeed;
+      case FORWARD -> Constants.IntakeConstants.forwardRollerSpeed;
+      case REVERSE -> Constants.IntakeConstants.reverseRollerSpeed;
       case MANUAL -> manualSpeed;
     };
   }
