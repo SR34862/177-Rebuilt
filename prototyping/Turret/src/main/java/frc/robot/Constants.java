@@ -43,5 +43,7 @@ public final class Constants {
         public static double kTopV = 0.00;
         public static double kTopS = 0.00;
         public static double topCurrentLimit = 10;
+
+        public static double zeroRollerPosition = 0;
     }
 }

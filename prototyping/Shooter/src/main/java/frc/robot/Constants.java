@@ -49,15 +49,8 @@ public final class Constants {
         public static final double kBottomV = 0;
         public static final double bottomCurrentLimit = 0;
 
-        public static final InvertedValue kickerMotorInvert = InvertedValue.CounterClockwise_Positive;
-        public static final NeutralModeValue kickerMotorBrakeMode = NeutralModeValue.Brake;
-        public static final double kKickerP = 0;
-        public static final double kKickerS = 0;
-        public static final double kKickerV = 0;
-        public static final double kickerCurrentLimit = 0;
-
-
-
+        public static final double idlePosition = 0.0;
+        public static final double idleSpeed = 0.0; 
         
     
 

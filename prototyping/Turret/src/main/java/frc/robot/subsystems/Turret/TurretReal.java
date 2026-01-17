@@ -1,73 +1,71 @@
 package frc.robot.subsystems.Turret;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Minute;
+import static edu.wpi.first.units.Units.Rotation;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Velocity;
-import edu.wpi.first.units.measure.Voltage;
-import frc.robot.Constants.TurretConstants;
+import frc.robot.Constants.TurretConstants;;
 
 public class TurretReal implements TurretIO {
 
-  private final TalonFX turretMotor = new TalonFX(20);
-  private final PositionVoltage positionRequest = new PositionVoltage(0);
-  private StatusSignal<Current> turretMotorStatorCurrent;
-  private StatusSignal<AngularVelocity> turretMotorVelocityRPS;
-  private StatusSignal<Angle> turretMotorPositionDegrees;
-  private StatusSignal<Voltage> turretMotorVolts;
+  private final TalonFX positionMotor = new TalonFX(10);
+  private final PositionTorqueCurrentFOC requestPosition = new PositionTorqueCurrentFOC(0);
+  private StatusSignal<AngularVelocity> velocityRPS;
+  private StatusSignal<Angle> poositionDeg;
 
   public TurretReal() {
     // Top motor configurations
-    TalonFXConfiguration turretConfigs = new TalonFXConfiguration();
-    turretMotor.getConfigurator().apply(turretConfigs); // reset to default
-    turretConfigs.MotorOutput.Inverted = TurretConstants.intakeMotorInvert;
-    turretConfigs.MotorOutput.NeutralMode = TurretConstants.intakeMotorBrakeMode;
-    turretConfigs.Slot0.kP = TurretConstants.kTopP;
-    turretConfigs.Slot0.kV = TurretConstants.kTopV;
-    turretConfigs.Slot0.kS = TurretConstants.kTopS;
-    turretConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
-    turretConfigs.CurrentLimits.StatorCurrentLimit = TurretConstants.topCurrentLimit;
-    turretMotor.getConfigurator().apply(turretConfigs);
+    TalonFXConfiguration topConfigs = new TalonFXConfiguration();
+    positionMotor.getConfigurator().apply(topConfigs); // reset to default
+    topConfigs.MotorOutput.Inverted = TurretConstants.intakeMotorInvert;
+    topConfigs.MotorOutput.NeutralMode = TurretConstants.intakeMotorBrakeMode;
+    topConfigs.Slot0.kP = TurretConstants.kTopP;
+    topConfigs.Slot0.kV = TurretConstants.kTopV;
+    topConfigs.Slot0.kS = TurretConstants.kTopS;
+    topConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    topConfigs.CurrentLimits.StatorCurrentLimit = TurretConstants.topCurrentLimit;
+    positionMotor.getConfigurator().apply(topConfigs);
     // Apply to signals
-
-    turretMotorStatorCurrent = turretMotor.getStatorCurrent();
-    turretMotorPositionDegrees = turretMotor.getPosition();
-    turretMotorVelocityRPS = turretMotor.getVelocity();
-    turretMotorVolts = turretMotor.getMotorVoltage();
+    poositionDeg = positionMotor.getPosition();
     // Set polling frequency and optimizations
-    BaseStatusSignal.setUpdateFrequencyForAll(50, turretMotorStatorCurrent, turretMotorPositionDegrees);
-    turretMotor.optimizeBusUtilization();
+    BaseStatusSignal.setUpdateFrequencyForAll(50, velocityRPS);
+    positionMotor.optimizeBusUtilization();
   }
 
   @Override
   public void updateInputs(TurretIOInputs inputs) {
     BaseStatusSignal.refreshAll(
-        turretMotorStatorCurrent,
-        turretMotorVolts,
-        turretMotorPositionDegrees, turretMotorVelocityRPS);
+        velocityRPS, poositionDeg);
 
-    inputs.positionDeg = turretMotorPositionDegrees.getValueAsDouble() * 360.0;
-    inputs.velocityDegPerSec = turretMotorVelocityRPS.getValueAsDouble() * 360.0;
-    inputs.statorCurrent = turretMotorStatorCurrent.getValueAsDouble();
-    inputs.appliedVolts = turretMotorVolts.getValueAsDouble();
-    ;
-    inputs.motorConnected = turretMotor.isConnected();
+    inputs.velocityRPM = velocityRPS.getValue().in(Rotation.per(Minute));
+    inputs.positionDeg = poositionDeg.getValue().in(Degrees);
+    inputs.positionConnected = positionMotor.isConnected();
   }
 
-  @Override
-  public void setPosition(double angleDeg) {
-    turretMotor.setControl(positionRequest.withPosition(Rotation2d.fromDegrees(angleDeg).getRotations()));
+  public void setPosition(double position) {
+    requestPosition.withPosition(position);
+  }
+
+  public void holdPosition(){
+     setPosition(getPosition());
+  }
+
+  public double getPosition() {
+    return Rotation2d.fromRotations(positionMotor.getPosition().getValueAsDouble()).getDegrees();
   }
 
   @Override
   public void stop() {
-    turretMotor.stopMotor();
+    positionMotor.stopMotor();
   }
 }

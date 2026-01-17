@@ -1,72 +1,71 @@
 package frc.robot.subsystems.Intake;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Minute;
-import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Rotation;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.VelocityDutyCycle;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import frc.robot.Constants;
+import frc.robot.Constants.IntakeConstants;;
 
 public class IntakeReal implements IntakeIO {
 
-  private final TalonFX intakeMotor = new TalonFX(30);
-  private VelocityDutyCycle rollerRequest = new VelocityDutyCycle(0);
-  private StatusSignal<Current> intakeMotorStatorCurrent;
-  private StatusSignal<AngularVelocity> intakeMotorVelocity;
+  private final TalonFX positionMotor = new TalonFX(10);
+  private final TalonFX velocityMotor = new TalonFX(11);
+
+  private final VelocityTorqueCurrentFOC requestVelocity = new VelocityTorqueCurrentFOC(0);
+  private final PositionTorqueCurrentFOC requestPosition = new PositionTorqueCurrentFOC(0);
+  private StatusSignal<AngularVelocity> velocityRPS;
+  private StatusSignal<Angle> poositionDeg;
 
   public IntakeReal() {
-    // Top motor configurations
-    TalonFXConfiguration intakeConfigs = new TalonFXConfiguration();
-    intakeMotor.getConfigurator().apply(intakeConfigs); // reset to default
-    intakeConfigs.MotorOutput.Inverted = Constants.IntakeConstants.intakeMotorInvert;
-    intakeConfigs.MotorOutput.NeutralMode = Constants.IntakeConstants.intakeMotorBrakeMode;
-    intakeConfigs.Slot0.kP = Constants.IntakeConstants.kTopP;
-    intakeConfigs.Slot0.kV = Constants.IntakeConstants.kTopV;
-    intakeConfigs.Slot0.kS = Constants.IntakeConstants.kTopS;
-    intakeConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
-    intakeConfigs.CurrentLimits.StatorCurrentLimit = Constants.IntakeConstants.topCurrentLimit;
-    intakeMotor.getConfigurator().apply(intakeConfigs);
+    // Bottom motor configurations
+    TalonFXConfiguration bottomConfigs = new TalonFXConfiguration();
+    velocityMotor.getConfigurator().apply(bottomConfigs); // reset to default
+    bottomConfigs.MotorOutput.Inverted = IntakeConstants.intakeMotorInvert;
+    bottomConfigs.MotorOutput.NeutralMode = IntakeConstants.intakeMotorBrakeMode;
+    bottomConfigs.Slot0.kP = IntakeConstants.kTopP;
+    bottomConfigs.Slot0.kV = IntakeConstants.kTopV;
+    bottomConfigs.Slot0.kS = IntakeConstants.kTopS;
+    bottomConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
+    bottomConfigs.CurrentLimits.StatorCurrentLimit = IntakeConstants.topCurrentLimit;
+    velocityMotor.getConfigurator().apply(bottomConfigs);
     // Apply to signals
-    intakeMotorStatorCurrent = intakeMotor.getStatorCurrent();
-    intakeMotorVelocity = intakeMotor.getVelocity();
+    velocityRPS = velocityMotor.getVelocity();
     // Set polling frequency and optimizations
-    BaseStatusSignal.setUpdateFrequencyForAll(50, intakeMotorStatorCurrent, intakeMotorVelocity);
-    intakeMotor.optimizeBusUtilization();
-
+    BaseStatusSignal.setUpdateFrequencyForAll(50, velocityRPS);
+    positionMotor.optimizeBusUtilization();
+    velocityMotor.optimizeBusUtilization();
   }
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    BaseStatusSignal.refreshAll(intakeMotorVelocity, intakeMotorStatorCurrent);
-    intakeMotorStatorCurrent = intakeMotor.getStatorCurrent();
-    intakeMotorVelocity = intakeMotor.getVelocity();
-    inputs.intakeAppliedCurrent = intakeMotorStatorCurrent.getValueAsDouble();
-    inputs.intakeVelocityRPM = intakeMotorVelocity.getValue().in(Rotations.per(Minute));
+    BaseStatusSignal.refreshAll(
+        velocityRPS, poositionDeg);
+
+    inputs.velocityRPM = velocityRPS.getValue().in(Rotation.per(Minute));
+    inputs.positionDeg = poositionDeg.getValue().in(Degrees);
+    inputs.velocityConnected = velocityMotor.isConnected();
   }
 
-  @Override
-  public void setManualVelocity(double velocity) {
-    intakeMotor.set(velocity);
+  public void setVelocity(double velocity) {
+    requestVelocity.withVelocity(velocity);
   }
 
-  @Override
-  public void setSpeed(AngularVelocity velocity) {
-    intakeMotor.setControl(rollerRequest.withVelocity(velocity));
-  }
-
-  @Override
-  public void setSpeed(double velocity) {
-    intakeMotor.setControl(rollerRequest.withVelocity(velocity));
+  public double getVelocity() {
+    return velocityMotor.getVelocity().getValueAsDouble();
   }
 
   @Override
   public void stop() {
-    intakeMotor.stopMotor();
+    velocityMotor.stopMotor();
   }
 }

@@ -1,36 +1,35 @@
 package frc.robot.subsystems.Shooter;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Minute;
+import static edu.wpi.first.units.Units.Rotation;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import frc.robot.Constants.ShooterConstants;;
 
 public class ShooterReal implements ShooterIO {
 
-  private final TalonFX topMotor = new TalonFX(10);
-  private final TalonFX bottomMotor = new TalonFX(11);
-  private final TalonFX kickerMotor = new TalonFX(12);
+  private final TalonFX positionMotor = new TalonFX(10);
+  private final TalonFX velocityMotor = new TalonFX(11);
 
-  private final VelocityTorqueCurrentFOC requestTop = new VelocityTorqueCurrentFOC(0);
-  private final VelocityTorqueCurrentFOC requestBottom = new VelocityTorqueCurrentFOC(0);
-  private final VelocityTorqueCurrentFOC requestKicker = new VelocityTorqueCurrentFOC(0);
-
-    private StatusSignal<Current> topMotorStatorCurrent;
-    private StatusSignal<AngularVelocity> topMotorVelocityRPS;
-    private StatusSignal<Current> bottomMotorStatorCurrent;
-    private StatusSignal<AngularVelocity> bottomMotorVelocityRPS;
-    private StatusSignal<Current> kickerMotorStatorCurrent;
-    private StatusSignal<AngularVelocity> kickerMotorVelocityRPS;
+  private final VelocityTorqueCurrentFOC requestVelocity = new VelocityTorqueCurrentFOC(0);
+  private final PositionTorqueCurrentFOC requestPosition = new PositionTorqueCurrentFOC(0);
+  private StatusSignal<AngularVelocity> velocityRPS;
+  private StatusSignal<Angle> poositionDeg;
 
   public ShooterReal() {
     // Top motor configurations
     TalonFXConfiguration topConfigs = new TalonFXConfiguration();
-    topMotor.getConfigurator().apply(topConfigs); // reset to default
+    positionMotor.getConfigurator().apply(topConfigs); // reset to default
     topConfigs.MotorOutput.Inverted = ShooterConstants.topMotorInvert;
     topConfigs.MotorOutput.NeutralMode = ShooterConstants.topMotorBrakeMode;
     topConfigs.Slot0.kP = ShooterConstants.kTopP;
@@ -38,10 +37,10 @@ public class ShooterReal implements ShooterIO {
     topConfigs.Slot0.kS = ShooterConstants.kTopS;
     topConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     topConfigs.CurrentLimits.StatorCurrentLimit = ShooterConstants.topCurrentLimit;
-    topMotor.getConfigurator().apply(topConfigs);
+    positionMotor.getConfigurator().apply(topConfigs);
     // Bottom motor configurations
     TalonFXConfiguration bottomConfigs = new TalonFXConfiguration();
-    bottomMotor.getConfigurator().apply(bottomConfigs); // reset to default
+    velocityMotor.getConfigurator().apply(bottomConfigs); // reset to default
     bottomConfigs.MotorOutput.Inverted = ShooterConstants.bottomMotorInvert;
     bottomConfigs.MotorOutput.NeutralMode = ShooterConstants.bottomMotorBrakeMode;
     bottomConfigs.Slot0.kP = ShooterConstants.kBottomP;
@@ -49,75 +48,49 @@ public class ShooterReal implements ShooterIO {
     bottomConfigs.Slot0.kS = ShooterConstants.kBottomS;
     bottomConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
     bottomConfigs.CurrentLimits.StatorCurrentLimit = ShooterConstants.bottomCurrentLimit;
-    bottomMotor.getConfigurator().apply(bottomConfigs);
-    // Kicker motor configurations
-    TalonFXConfiguration kickerConfigs = new TalonFXConfiguration();
-    bottomMotor.getConfigurator().apply(kickerConfigs); // reset to default
-    kickerConfigs.MotorOutput.Inverted = ShooterConstants.kickerMotorInvert;
-    kickerConfigs.MotorOutput.NeutralMode = ShooterConstants.kickerMotorBrakeMode;
-    kickerConfigs.Slot0.kP = ShooterConstants.kKickerP;
-    kickerConfigs.Slot0.kV = ShooterConstants.kKickerV;
-    kickerConfigs.Slot0.kS = ShooterConstants.kKickerS;
-    kickerConfigs.CurrentLimits.StatorCurrentLimitEnable = true;
-    kickerConfigs.CurrentLimits.StatorCurrentLimit = ShooterConstants.kickerCurrentLimit;
-    kickerMotor.getConfigurator().apply(kickerConfigs);
+    velocityMotor.getConfigurator().apply(bottomConfigs);
     // Apply to signals
-    
-    topMotorStatorCurrent = topMotor.getStatorCurrent();
-    topMotorVelocityRPS = topMotor.getVelocity();
-    bottomMotorStatorCurrent = bottomMotor.getStatorCurrent();
-    bottomMotorVelocityRPS = bottomMotor.getVelocity();
-    kickerMotorStatorCurrent = kickerMotor.getStatorCurrent();
-    kickerMotorVelocityRPS = kickerMotor.getVelocity();
+    velocityRPS = velocityMotor.getVelocity();
     // Set polling frequency and optimizations
-    BaseStatusSignal.setUpdateFrequencyForAll(50, topMotorStatorCurrent, topMotorVelocityRPS, bottomMotorStatorCurrent, bottomMotorVelocityRPS,kickerMotorStatorCurrent, kickerMotorVelocityRPS);
-    topMotor.optimizeBusUtilization();
-    bottomMotor.optimizeBusUtilization();
-    kickerMotor.optimizeBusUtilization();
+    BaseStatusSignal.setUpdateFrequencyForAll(50, velocityRPS);
+    positionMotor.optimizeBusUtilization();
+    velocityMotor.optimizeBusUtilization();
   }
 
   @Override
   public void updateInputs(ShooterIOInputs inputs) {
     BaseStatusSignal.refreshAll(
-        topMotorStatorCurrent,
-        topMotorVelocityRPS,
-        bottomMotorStatorCurrent,
-        bottomMotorVelocityRPS,
-        kickerMotorStatorCurrent,
-        kickerMotorVelocityRPS);
+        velocityRPS, poositionDeg);
 
-    inputs.topVelocityRPM = topMotor.getVelocity().getValueAsDouble() * 60.0;
-    inputs.bottomVelocityRPM = bottomMotor.getVelocity().getValueAsDouble() * 60.0;
-    inputs.kickerVelocityRPM = kickerMotor.getVelocity().getValueAsDouble() * 60.0;
-
-    inputs.topAppliedVolts = topMotor.getMotorVoltage().getValueAsDouble();
-    inputs.bottomAppliedVolts = bottomMotor.getMotorVoltage().getValueAsDouble();
-    inputs.kickerAppliedVolts = kickerMotor.getMotorVoltage().getValueAsDouble();
-
-    inputs.topConnected = topMotor.isConnected();
-    inputs.bottomConnected = bottomMotor.isConnected();
-    inputs.kickerConnected = kickerMotor.isConnected();
+    inputs.velocityRPM = velocityRPS.getValue().in(Rotation.per(Minute));
+    inputs.positionDeg = poositionDeg.getValue().in(Degrees);
+    inputs.velocityConnected = velocityMotor.isConnected();
+    inputs.positionConnected = positionMotor.isConnected();
   }
 
-  @Override
-  public void setTopVelocity(double rpm) {
-    topMotor.setControl(requestTop.withVelocity(rpm / 60.0));
+  public void setPosition(double position) {
+    requestPosition.withPosition(position);
   }
 
-  @Override
-  public void setBottomVelocity(double rpm) {
-    bottomMotor.setControl(requestBottom.withVelocity(rpm / 60.0));
+  public void setVelocity(double velocity) {
+    requestVelocity.withVelocity(velocity);
   }
 
-  @Override
-  public void setKickerVelocity(double rpm) {
-    kickerMotor.setControl(requestKicker.withVelocity(rpm / 60.0));
+  public void holdPosition(){
+     setPosition(getPosition());
+  }
+
+  public double getPosition() {
+    return Rotation2d.fromRotations(positionMotor.getPosition().getValueAsDouble()).getDegrees();
+  }
+
+  public double getVelocity() {
+    return positionMotor.getVelocity().getValueAsDouble();
   }
 
   @Override
   public void stop() {
-    topMotor.stopMotor();
-    bottomMotor.stopMotor();
-    kickerMotor.stopMotor();
+    positionMotor.stopMotor();
+    velocityMotor.stopMotor();
   }
 }

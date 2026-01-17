@@ -1,38 +1,40 @@
 package frc.robot.subsystems.Intake;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.Intake.IntakeState.State;
 
 public class Intake extends SubsystemBase {
+
   private final IntakeIO io;
-  private final IntakeIOInputsAutoLogged inputs =
-      new IntakeIOInputsAutoLogged();
+  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+
   private IntakeState desiredState;
+
   public Intake(IntakeIO io) {
     this.io = io;
     desiredState = new IntakeState();
-    desiredState.setState(IntakeState.State.IDLE);
+    desiredState.setState(State.IDLE);
   }
 
   @Override
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Intake", inputs);
-
-    Logger.recordOutput("Intake/State", desiredState.getCurrentState());
+    Logger.processInputs("Shooter", inputs);
+    Logger.recordOutput("Shooter/State", desiredState.currentState);
   }
 
-  public void setManualVelocity(double intakeSpeed) {
-    io.setManualVelocity(intakeSpeed);
-    desiredState.setState(IntakeState.State.MANUAL);
+  public void setState(IntakeState.State state){
+    setVelocity(state);
   }
 
-  public void setSpeed(IntakeState.State state){
+  public void setVelocity(IntakeState.State state) {
     desiredState.setState(state);
-    io.setSpeed( desiredState.getOutput() );
+    io.setVelocity(desiredState.getOutput().speed);
   }
 
-  public void setState(IntakeState.State state) {
-    desiredState.setState(state);
+  public void stop() {
+    io.stop();
   }
 }

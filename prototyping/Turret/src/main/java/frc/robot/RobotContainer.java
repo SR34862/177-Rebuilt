@@ -90,11 +90,6 @@ public class RobotContainer {
    * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    controller.rightBumper().whileTrue(new RunCommand(() -> turret.setManualVoltage(0.2 * 12)))
-        .onFalse(new InstantCommand(() -> turret.setManualVoltage(0)));
-
-    controller.leftBumper().whileTrue(new RunCommand(() -> turret.setManualVoltage(0.2 * -12)))
-        .onFalse(new InstantCommand(() -> turret.setManualVoltage(0)));
   }
 
   /**

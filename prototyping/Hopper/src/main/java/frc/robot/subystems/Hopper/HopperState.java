@@ -3,18 +3,21 @@ package frc.robot.subystems.Hopper;
 import frc.robot.Constants;
 
 public class HopperState {
+  public class ShooterGoal {
+    public double position;
+    public double speed;
+  }
 
   public enum State {
     IDLE,
     MANUAL,
-    FORWARD,
-    REVERSE
+    TARGETTING
   }
 
-  private State currentState = State.IDLE;
+  public State currentState = State.IDLE;
   private double manualSpeed = 0.0;
 
-  /** Set the Hopper to a predefined state */
+  /** Set the intake to a predefined state */
   public void setState(State state) {
     this.currentState = state;
   }
@@ -25,17 +28,30 @@ public class HopperState {
     currentState = State.MANUAL;
   }
 
+  public void setManualPosition(double position) {
+    manualPosition = position;
+    currentState = State.MANUAL;
+  }
+
   /** Returns the motor output based on the current state */
-  public double getOutput() {
-    return switch (currentState) {
-      case IDLE -> Constants.HopperConstants.idleHopperSpeed;
-      case FORWARD -> Constants.HopperConstants.intakeHopperSpeed;
-      case REVERSE -> Constants.HopperConstants.outtakeHopperSpeed;
-      case MANUAL -> manualSpeed;
-    };
+  public ShooterGoal getOutput() {
+    ShooterGoal goal = new ShooterGoal();
+    switch (currentState) {
+      case IDLE -> {
+        goal.speed = Constants.ShooterConstants.idleSpeed;
+      }
+      case MANUAL -> {
+        goal.speed = manualSpeed;
+      }
+    }
+    return goal;
   }
 
   public State getCurrentState() {
     return currentState;
+  }
+
+  public double getSpeed(){
+    return manualSpeed;
   }
 }
