@@ -1,4 +1,4 @@
-# Step-by-Step Shooter Tuning for High School Students (VelocityTorqueFOC)
+# Step-by-Step Shooter Tuning for (VelocityTorqueFOC)
 
 This guide is written for high school FRC teams to **safely tune a shooter** using VelocityTorqueFOC.
 
@@ -8,7 +8,6 @@ This guide is written for high school FRC teams to **safely tune a shooter** usi
 
 1. **Safety First**
    - Ensure the robot is secured (test rig or wheels off the floor).
-   - Wear **safety glasses**.
    - Remove loose objects near the flywheel.
 
 2. **Check Hardware**
