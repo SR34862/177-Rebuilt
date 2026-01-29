@@ -58,8 +58,7 @@ public class RobotContainer {
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        m_shooter = new Shooter(new ShooterIO() {
-        });
+        m_shooter = new Shooter(new ShooterReal());
         break;
 
       default:
@@ -101,16 +100,20 @@ public class RobotContainer {
         .onFalse(new InstantCommand(() -> m_shooter.stopBackspinWheel()));
     controller.x().whileTrue(new RunCommand(() -> m_shooter.setIntakeSpeed(idleState.getIntakeSpeed()), m_shooter))
         .onFalse(new InstantCommand(() -> m_shooter.stopIntakeWheel()));
- 
-    // Control wheels with intake A button will spin up the backspin and main flywheels, right bumper will allow intaking.
+
+    // Control wheels with intake A button will spin up the backspin and main
+    // flywheels, right bumper will allow intaking.
     controller.rightBumper()
         .whileTrue(new RunCommand(() -> m_shooter.setIntakeSpeed(idleState.getIntakeSpeed()), m_shooter))
         .onFalse(new InstantCommand(() -> m_shooter.stopIntakeWheel()));
     controller.a()
-        .whileTrue(new RunCommand(() -> m_shooter.setMainWheelSpeed(idleState.getFlywheelSpeed()), m_shooter)
-            .alongWith(new RunCommand(() -> m_shooter.setBackspinSpeed(idleState.getBackspinSpeed()), m_shooter)))
-        .onFalse(new InstantCommand(() -> m_shooter.stopMainWheel())
-            .alongWith(new InstantCommand(() -> m_shooter.stopBackspinWheel())));
+        .whileTrue(new RunCommand(() -> {
+          m_shooter.setMainWheelSpeed(idleState.getFlywheelSpeed());
+          m_shooter.setBackspinSpeed(idleState.getBackspinSpeed());
+        }, m_shooter)).onFalse(new InstantCommand(() -> {
+          m_shooter.stopBackspinWheel();
+          m_shooter.stopIntakeWheel();
+        }));
   }
 
   /**
@@ -123,5 +126,6 @@ public class RobotContainer {
   }
 
   public void teleopPeriodic() {
+
   }
 }
