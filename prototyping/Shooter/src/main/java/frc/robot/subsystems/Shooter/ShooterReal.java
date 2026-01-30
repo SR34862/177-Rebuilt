@@ -179,7 +179,7 @@ public class ShooterReal implements ShooterIO {
 
     inputs.velocityOfMainFlywhelRightRPS = velocityOfMainFlywheeRightRPS.getValue().in(Rotation.per(Seconds));
 
-    inputs.velocityOfbackspinWheelMotorRPS = velocityOfbackspinWheelMotorRPS.getValue().in(Rotation.per(Seconds));
+    inputs.velocityOfbackspinWheelMotorRPS = velocityOfbackspinWheelMotorRPS.getValueAsDouble();
 
     inputs.velocityOfIntakeWheelRPS = velocityOfIntakeWheelRPS.getValue().in(Rotation.per(Seconds));
 
