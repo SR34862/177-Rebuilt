@@ -17,11 +17,10 @@ package frc.robot;
 // import frc.robot.subsystems.roller.RollerSubsystem;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Shooter.Shooter;
@@ -46,7 +45,7 @@ public class RobotContainer {
   private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
-  private final LoggedDashboardChooser<Command> autoChooser;
+  private LoggedDashboardChooser<Command> autoChooser;
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -59,8 +58,7 @@ public class RobotContainer {
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        m_shooter = new Shooter(new ShooterIO() {
-        });
+        m_shooter = new Shooter(new ShooterReal());
         break;
 
       default:
@@ -71,7 +69,7 @@ public class RobotContainer {
     }
 
     // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    // autoChooser = new LoggedDashboardChooser<>("Auto Choices",null);
 
     // Set up SysId routines
 
@@ -88,61 +86,34 @@ public class RobotContainer {
    * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    ShooterState left = new ShooterState();
-    left.currentState = ShooterState.State.MANUAL;
-    left.setManualPosition(90);
-    ShooterState right = new ShooterState();
-    right.currentState = ShooterState.State.MANUAL;
-    right.setManualPosition(270);
-    ShooterState up = new ShooterState();
-    up.currentState = ShooterState.State.MANUAL;
-    up.setManualPosition(0);
-    ShooterState down = new ShooterState();
-    down.currentState = ShooterState.State.MANUAL;
-    down.setManualPosition(180);
-    ShooterState upleft = new ShooterState();
-    upleft.currentState = ShooterState.State.MANUAL;
-    upleft.setManualPosition(45);
-    ShooterState upright = new ShooterState();
-    upright.currentState = ShooterState.State.MANUAL;
-    upright.setManualPosition(315);
-    ShooterState downleft = new ShooterState();
-    downleft.currentState = ShooterState.State.MANUAL;
-    downleft.setManualPosition(135);
-    ShooterState downright = new ShooterState();
-    downright.currentState = ShooterState.State.MANUAL;
-    downright.setManualPosition(225);
+    ShooterState idleState = new ShooterState();
+    ShooterState.State desired = ShooterState.State.MANUAL;
+    idleState.setState(desired);
+    idleState.setManualSpeeds(Constants.ShooterConstants.idleFlywheelSpeedRPS,
+        Constants.ShooterConstants.idleIntakeSpeedRPS, Constants.ShooterConstants.idleBackspinSpeedRPS);
+    m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.setState(idleState), m_shooter));
 
-    ShooterState full = new ShooterState();
-    full.currentState = ShooterState.State.MANUAL;
-    full.setManualSpeed(5);
-    Command runFlywheel = new RunCommand(() -> m_shooter.setVelocity(full.currentState));
-    Command holdCommand = new RunCommand(() -> m_shooter.holdPosition());
-    controller.povLeft()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(left.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povUpLeft()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(left.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povUpRight()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(left.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povRight()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(right.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povUp()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(up.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povDown()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(down.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povDownLeft()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(down.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
-    controller.povDownRight()
-        .whileTrue(new RunCommand(() -> m_shooter.setPosition(down.currentState)).alongWith(runFlywheel))
-        .onFalse(holdCommand);
+    // CONTROL WHEELS INDIVIDUALLY
+    controller.y().whileTrue(new RunCommand(() -> m_shooter.setMainWheelSpeed(idleState.getFlywheelSpeed()), m_shooter))
+        .onFalse(new InstantCommand(() -> m_shooter.stopMainWheel()));
+    controller.b().whileTrue(new RunCommand(() -> m_shooter.setBackspinSpeed(idleState.getBackspinSpeed()), m_shooter))
+        .onFalse(new InstantCommand(() -> m_shooter.stopBackspinWheel()));
+    controller.x().whileTrue(new RunCommand(() -> m_shooter.setIntakeSpeed(idleState.getIntakeSpeed()), m_shooter))
+        .onFalse(new InstantCommand(() -> m_shooter.stopIntakeWheel()));
 
+    // Control wheels with intake A button will spin up the backspin and main
+    // flywheels, right bumper will allow intaking.
+    controller.rightBumper()
+        .whileTrue(new RunCommand(() -> m_shooter.setIntakeSpeed(idleState.getIntakeSpeed()), m_shooter))
+        .onFalse(new InstantCommand(() -> m_shooter.stopIntakeWheel()));
+    controller.a()
+        .whileTrue(new RunCommand(() -> {
+          m_shooter.setMainWheelSpeed(idleState.getFlywheelSpeed());
+          m_shooter.setBackspinSpeed(idleState.getBackspinSpeed());
+        }, m_shooter)).onFalse(new InstantCommand(() -> {
+          m_shooter.stopBackspinWheel();
+          m_shooter.stopIntakeWheel();
+        }));
   }
 
   /**
@@ -155,5 +126,6 @@ public class RobotContainer {
   }
 
   public void teleopPeriodic() {
+
   }
 }
