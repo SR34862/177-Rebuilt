@@ -44,8 +44,19 @@ public final class Constants {
         public static final double idleBackspinSpeedRPS = 0;
         // Max Speed values are 52.5 , 20 & 30 
         public static final double targetFlywheelSpeedRPS = 52.5;
-        public static final double targetIntakeSpeedRPS = 20;
+        public static final double targetIntakeSpeedRPS = 0.2;
         public static final double targetBackspinSpeedRPS = 30;
+        // 75, -20, 30 - min values 
+
+        // ID Constants
+        public static final int FlywheelIDLeft = 29;
+        public static final int BackspinIDLeft = 2;
+        public static final int intakeIDLeft = 30;
+
+        // ID Constants
+        public static final int FlywheelIDRight = 17;
+        public static final int BackspinIDRight = 20;
+        public static final int intakeIDRight = 28;
         // Motor Constants
         public static final InvertedValue shooterMainMotorRightInvert = InvertedValue.CounterClockwise_Positive;
         public static final NeutralModeValue shooterMainMotorRightBrakeMode = NeutralModeValue.Coast;
@@ -69,11 +80,12 @@ public final class Constants {
         public static final double topTopCurrentLimit = 40;
 
         public static final InvertedValue topBottomMotorInvert = InvertedValue.Clockwise_Positive;
+        public static final InvertedValue RightIntakeMotorInvert = InvertedValue.CounterClockwise_Positive;
         public static final NeutralModeValue topBottomMotorBrakeMode = NeutralModeValue.Coast;
         public static final double kTopBottomP = 5;
         public static final double kTopBottomS = 0;
         public static final double kTopBottomV = 0;
-        public static final double topBottomCurrentLimit = 40;
+        public static final double topBottomCurrentLimit = 80;
 
     }
 }

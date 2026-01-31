@@ -6,28 +6,32 @@ import static edu.wpi.first.units.Units.Seconds;
 import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.wpilibj.DutyCycle;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.subsystems.Shooter.ShooterIO.ShooterIOInputs;
 import frc.robot.subsystems.Shooter.ShooterState;;
 
 public class ShooterModuleSingle implements ShooterModuleInterface{
 
-  private final TalonFX shooterMainMotorLeft = new TalonFX(17);
-
-  private final TalonFX shooterIntakeWheelMotor = new TalonFX(30);
-  private final TalonFX backspinWheelMotor = new TalonFX(2);
+  private final TalonFX shooterMainMotorLeft;
+  private final TalonFX shooterIntakeWheelMotor;
+  private final TalonFX backspinWheelMotor;
 
   private final VelocityTorqueCurrentFOC velShooterRequest = new VelocityTorqueCurrentFOC(0);
   private final VelocityTorqueCurrentFOC velBackspinRequest = new VelocityTorqueCurrentFOC(0);
-  private final VelocityTorqueCurrentFOC velIntakeRequest = new VelocityTorqueCurrentFOC(0);
+  //private final VelocityTorqueCurrentFOC velIntakeRequest = new VelocityTorqueCurrentFOC(0);
+  private final DutyCycleOut velIntakeRequest = new DutyCycleOut(0);
   private StatusSignal<AngularVelocity> velocityOfMainFlywhelLeftRPS;
   private StatusSignal<AngularVelocity> velocityOfbackspinWheelMotorRPS;
   private StatusSignal<AngularVelocity> velocityOfIntakeWheelRPS;
@@ -35,10 +39,12 @@ public class ShooterModuleSingle implements ShooterModuleInterface{
   private StatusSignal<Current> statorCurrentOfBackspinAmps;
   private StatusSignal<Current> statorCurrentofIntakeAmps;
 
-  public ShooterModuleSingle(Slot0Configs flywheel,Slot0Configs intake, Slot0Configs backspin) {
-    
+  public ShooterModuleSingle(Slot0Configs flywheel,Slot0Configs intake, Slot0Configs backspin, int fly, int back, int int1, boolean isInverted) {
+   shooterMainMotorLeft = new TalonFX(fly, new CANBus("rio"));
+   shooterIntakeWheelMotor = new TalonFX(int1, new CANBus("rio"));
+   backspinWheelMotor = new TalonFX(back, new CANBus("rio"));
     configureShooterFlywheel(flywheel);
-    configureIntakeWheel(intake);
+    configureIntakeWheel(intake, isInverted);
     configurebackspinWheelMotor(backspin);
 
     // Apply to signals
@@ -72,8 +78,8 @@ public class ShooterModuleSingle implements ShooterModuleInterface{
     // Top motor configurations
     TalonFXConfiguration shooterLeftConfig = new TalonFXConfiguration();
     shooterMainMotorLeft.getConfigurator().apply(shooterLeftConfig); // reset to default
-    shooterLeftConfig.MotorOutput.Inverted = ShooterConstants.shooterMainMotorLeftInvert;
-    shooterLeftConfig.MotorOutput.NeutralMode = ShooterConstants.shooterMainMotorLeftBrakeMode;
+    shooterLeftConfig.MotorOutput.Inverted = ShooterConstants.shooterMainMotorRightInvert;
+    shooterLeftConfig.MotorOutput.NeutralMode = ShooterConstants.shooterMainMotorRightBrakeMode;
     shooterLeftConfig.Slot0.kP = slot0.kP;
     shooterLeftConfig.Slot0.kI = slot0.kI;
     shooterLeftConfig.Slot0.kD = slot0.kD;
@@ -85,11 +91,15 @@ public class ShooterModuleSingle implements ShooterModuleInterface{
 
   }
 
-  public void configureIntakeWheel(Slot0Configs slot0)  {
+  public void configureIntakeWheel(Slot0Configs slot0, boolean isInverted)  {
     // Bottom motor configurations
     TalonFXConfiguration shooterIntakeWheelMotorConfig = new TalonFXConfiguration();
     shooterIntakeWheelMotor.getConfigurator().apply(shooterIntakeWheelMotorConfig); // reset to default
+    if (isInverted){
+    shooterIntakeWheelMotorConfig.MotorOutput.Inverted = ShooterConstants.RightIntakeMotorInvert;
+    } else {
     shooterIntakeWheelMotorConfig.MotorOutput.Inverted = ShooterConstants.topBottomMotorInvert;
+    }
     shooterIntakeWheelMotorConfig.MotorOutput.NeutralMode = ShooterConstants.topBottomMotorBrakeMode;
     shooterIntakeWheelMotorConfig.Slot0.kP = slot0.kP;
     shooterIntakeWheelMotorConfig.Slot0.kV = slot0.kV;
@@ -118,7 +128,7 @@ public class ShooterModuleSingle implements ShooterModuleInterface{
         BaseStatusSignal.refreshAll(
         velocityOfMainFlywhelLeftRPS);
     inputs.velocityOfMainFlywhelLeftRPS = velocityOfMainFlywhelLeftRPS.getValue().in(Rotation.per(Seconds));
-    inputs.velocityOfbackspinWheelMotorRPS = velocityOfbackspinWheelMotorRPS.getValueAsDouble();
+    inputs.velocityOfbackspinWheelMotorRPS = velocityOfbackspinWheelMotorRPS.getValue().in(Rotation.per(Seconds));
     inputs.velocityOfIntakeWheelRPS = velocityOfIntakeWheelRPS.getValue().in(Rotation.per(Seconds));
     inputs.backspinConnected = backspinWheelMotor.isConnected();
     inputs.intakeConnected = shooterIntakeWheelMotor.isConnected();
@@ -154,7 +164,8 @@ public class ShooterModuleSingle implements ShooterModuleInterface{
   }
 
   public void setIntakeSpeed(double shooterIntakeSpeed) {
-    shooterIntakeWheelMotor.setControl(velIntakeRequest.withVelocity(shooterIntakeSpeed));
+    //shooterIntakeWheelMotor.setControl(velIntakeRequest.withVelocity(shooterIntakeSpeed));
+    shooterIntakeWheelMotor.set(shooterIntakeSpeed);
   }
 
   public void holdPosition() {

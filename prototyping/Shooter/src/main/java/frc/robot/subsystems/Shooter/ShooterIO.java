@@ -23,7 +23,7 @@ public interface ShooterIO {
     public boolean intakeConnected = false;
   }
 
-  default void updateInputs(ShooterIOInputs inputs) {
+  default void updateInputs(ShooterIOInputs LeftInputs, ShooterIOInputs RightInputs) {
   }
 
   public default void setVelocity(ShooterState desiredState) {

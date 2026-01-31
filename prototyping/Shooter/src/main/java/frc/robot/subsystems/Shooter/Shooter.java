@@ -8,7 +8,9 @@ import frc.robot.subsystems.Shooter.ShooterState.State;
 public class Shooter extends SubsystemBase {
 
   private final ShooterIO io;
-  private final ShooterIOInputsAutoLogged inputs = new ShooterIOInputsAutoLogged();
+  private final ShooterIOInputsAutoLogged LeftInputs = new ShooterIOInputsAutoLogged();
+    private final ShooterIOInputsAutoLogged RightInputs = new ShooterIOInputsAutoLogged();
+
 
   private ShooterState desiredState;
 
@@ -21,8 +23,10 @@ public class Shooter extends SubsystemBase {
   @Override
   public void periodic() {
     io.periodic();
-    io.updateInputs(inputs);
-    Logger.processInputs("Shooter", inputs);
+    io.updateInputs(LeftInputs,RightInputs);
+    Logger.processInputs("Shooter/Left", LeftInputs);
+    Logger.processInputs("Shooter/Right", RightInputs);
+    
     Logger.recordOutput("Shooter/State", desiredState.getCurrentState());
 
   }
