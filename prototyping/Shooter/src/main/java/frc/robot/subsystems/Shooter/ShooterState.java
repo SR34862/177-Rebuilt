@@ -29,12 +29,12 @@ public class ShooterState {
   private State currentState = State.IDLE;
 
   // Manual control values
-  private TunableDouble manualFlywheelSpeedRight = new TunableDouble("/Shooter/MainMotor/Right/manualFlywheelSpeed", 0.0);
-  private TunableDouble manualIntakeSpeedRight = new TunableDouble("/Shooter/Intake/Right/manualIntakeSpeed", 0.0);
-  private TunableDouble manualBackspinSpeedRight = new TunableDouble("/Shooter/Backspin/Right/manualBackspinSpeed", 0.0);
-  private TunableDouble manualFlywheelSpeedLeft = new TunableDouble("/Shooter/MainMotor/Left/manualFlywheelSpeed", 0.0);
-  private TunableDouble manualIntakeSpeedLeft = new TunableDouble("/Shooter/Intake/Left/manualIntakeSpeed", 0.0);
-  private TunableDouble manualBackspinSpeedLeft = new TunableDouble("/Shooter/Backspin/Left/manualBackspinSpeed", 0.0);
+  private TunableDouble manualFlywheelSpeedRight = new TunableDouble("/Shooter/MainMotor/Right/manualFlywheelSpeedTarget", 0.0);
+  private TunableDouble manualIntakeSpeedRight = new TunableDouble("/Shooter/Intake/Right/manualIntakeSpeedTarget", 0.0);
+  private TunableDouble manualBackspinSpeedRight = new TunableDouble("/Shooter/Backspin/Right/manualBackspinSpeedTarget", 0.0);
+  private TunableDouble manualFlywheelSpeedLeft = new TunableDouble("/Shooter/MainMotor/Left/manualFlywheelSpeedTarget", 0.0);
+  private TunableDouble manualIntakeSpeedLeft = new TunableDouble("/Shooter/Intake/Left/manualIntakeSpeedTarget", 0.0);
+  private TunableDouble manualBackspinSpeedLeft = new TunableDouble("/Shooter/Backspin/Left/manualBackspinSpeedTarget", 0.0);
 
   /** Set the shooter to a predefined state */
   public void setState(State state) {
@@ -48,12 +48,12 @@ public class ShooterState {
       double flywheelSpeed,
       double intakeSpeed,
       double backspinSpeed) {
-    manualFlywheelSpeedRight = new TunableDouble("/Shooter/Right/manualFlywheelSpeed", flywheelSpeed);
-    manualIntakeSpeedRight = new TunableDouble("/Shooter/Right/manualIntakeSpeed", intakeSpeed);
-    manualBackspinSpeedRight = new TunableDouble("/Shooter/Right/manualBackspinSpeed", backspinSpeed);
-    manualFlywheelSpeedLeft = new TunableDouble("/Shooter/Left/manualFlywheelSpeed", flywheelSpeed);
-    manualIntakeSpeedLeft = new TunableDouble("/Shooter/Left/manualIntakeSpeed", intakeSpeed);
-    manualBackspinSpeedLeft = new TunableDouble("/Shooter/Left/manualBackspinSpeed", backspinSpeed);
+    manualFlywheelSpeedRight = new TunableDouble("/Shooter/MainMotor/Right/manualFlywheelSpeedTarget", flywheelSpeed);
+    manualIntakeSpeedRight = new TunableDouble("/Shooter/Intake/Right/manualIntakeSpeedTarget", intakeSpeed);
+    manualBackspinSpeedRight = new TunableDouble("/Shooter/Backspin/Right/manualBackspinSpeedTarget", backspinSpeed);
+    manualFlywheelSpeedLeft = new TunableDouble("/Shooter/MainMotor/Left/manualFlywheelSpeedTarget", flywheelSpeed);
+    manualIntakeSpeedLeft = new TunableDouble("/Shooter/Intake/Left/manualIntakeSpeedTarget", intakeSpeed);
+    manualBackspinSpeedLeft = new TunableDouble("/Shooter/Backspin/Left/manualBackspinSpeedTarget", backspinSpeed);
 
     currentState = State.MANUALBOTH;
   }

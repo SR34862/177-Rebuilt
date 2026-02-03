@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Rotation;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
-import static edu.wpi.first.units.Units.Volt;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -17,7 +16,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.units.measure.Acceleration;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -33,9 +31,8 @@ public class ShooterModuleSingle implements ShooterModuleInterface {
 
   private final VelocityTorqueCurrentFOC velShooterRequest = new VelocityTorqueCurrentFOC(0);
   private final VelocityTorqueCurrentFOC velBackspinRequest = new VelocityTorqueCurrentFOC(0);
-  // private final VelocityTorqueCurrentFOC velIntakeRequest = new
-  // VelocityTorqueCurrentFOC(0);
-  private final DutyCycleOut velIntakeRequest = new DutyCycleOut(0);
+  private final VelocityTorqueCurrentFOC velIntakeRequest = new VelocityTorqueCurrentFOC(0);
+  //private final DutyCycleOut velIntakeRequest = new DutyCycleOut(0);
   private StatusSignal<AngularVelocity> velocityOfMainFlywhelLeftRPS;
   private StatusSignal<AngularVelocity> velocityOfbackspinWheelMotorRPS;
   private StatusSignal<AngularVelocity> velocityOfIntakeWheelRPS;
@@ -243,8 +240,8 @@ public class ShooterModuleSingle implements ShooterModuleInterface {
 
   public void setIntakeSpeed(double shooterIntakeSpeed) {
     intakeSetpoint = shooterIntakeSpeed;
-    // shooterIntakeWheelMotor.setControl(velIntakeRequest.withVelocity(shooterIntakeSpeed));
-    shooterIntakeWheelMotor.set(shooterIntakeSpeed);
+    shooterIntakeWheelMotor.setControl(velIntakeRequest.withVelocity(shooterIntakeSpeed));
+    //shooterIntakeWheelMotor.set(shooterIntakeSpeed);
   }
 
   public void holdPosition() {

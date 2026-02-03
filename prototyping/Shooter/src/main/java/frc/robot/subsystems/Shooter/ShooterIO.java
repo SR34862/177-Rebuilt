@@ -75,4 +75,8 @@ public interface ShooterIO {
 
   public default void stopIntakeWheel() {
   }
+
+  public default void simulationPeriodic(){
+    
+  }
 }
