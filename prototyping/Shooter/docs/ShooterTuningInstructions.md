@@ -38,9 +38,11 @@ kD = 0
 ```
 2. Slowly ramp the shooter from 0 → target speed (e.g., 1200 RPM).
 3. Observe torque/current:
-   - `kS` = torque needed to start spinning.
-   - `kA` = inertia feed forward, used to calculate the amount of motor torque or voltage required to achieve the desired accelration. Improves the responsiveness of the velocity by proactively commanding torque based on acceleration rather than waiting for error to build up.
+   - `kS` = torque needed to start spinning. kS is right when wheel just spins cleanly , no buzzing or slow to start at low speeds.\
+   - `kA` = inertia feed forward, used to calculate the amount of motor torque or voltage required to achieve the desired acceleration. Improves the responsiveness of the velocity by proactively commanding torque based on acceleration rather than waiting for error to build up.
    - `kV` = torque needed to hold speed.
+      -  If actual speed < setpoint → increase kV
+      -  If actual speed > setpoint → decrease kV
 4. Write down FF numbers.
 
 ---
@@ -120,22 +122,3 @@ config.CurrentLimits.StatorCurrentLimitEnable = true;
 
 
 
-🎯 How to Tune kV in 60 Seconds
-
-Disable PID (P = I = D = 0)
-
-Apply only FF
-
-Slowly increase setpoint
-
-Watch:
-
-If actual speed < setpoint → increase kV
-
-If actual speed > setpoint → decrease kV
-
-kS is right when:
-
-Wheel just starts spinning cleanly
-
-No buzzing / hesitation at low speed
