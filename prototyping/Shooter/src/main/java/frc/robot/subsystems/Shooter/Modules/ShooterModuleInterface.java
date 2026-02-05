@@ -3,13 +3,13 @@ package frc.robot.subsystems.Shooter.Modules;
 import frc.robot.subsystems.Shooter.ShooterState;
 
 public interface ShooterModuleInterface {
-    public default void configureShooterFlywheel(Configurator config)  {
+    public default void configureShooterFlywheel(ModuleConfigurator config)  {
     }
 
-    public default void configureIntakeWheel(Configurator config) {
+    public default void configureIntakeWheel(ModuleConfigurator config) {
     }
 
-    public default void configurebackspinWheelMotor(Configurator config)  {
+    public default void configurebackspinWheelMotor(ModuleConfigurator config)  {
 
     }
 

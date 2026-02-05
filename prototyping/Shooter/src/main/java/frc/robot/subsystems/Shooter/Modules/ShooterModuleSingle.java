@@ -10,7 +10,6 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -46,9 +45,9 @@ public class ShooterModuleSingle implements ShooterModuleInterface {
   private StatusSignal<AngularAcceleration> accelerationOfBackspin;
   private StatusSignal<AngularAcceleration> accelerationOfIntake;
 
-  public Configurator flywheelConfig;
-  public Configurator backspinConfig;
-  public Configurator intakeConfig;
+  public ModuleConfigurator flywheelConfig;
+  public ModuleConfigurator backspinConfig;
+  public ModuleConfigurator intakeConfig;
 
   public int shooterIndex;
 
@@ -56,7 +55,7 @@ public class ShooterModuleSingle implements ShooterModuleInterface {
   public double backspinSetpoint = 0;
   public double intakeSetpoint = 0;
 
-  public ShooterModuleSingle(Configurator flywheelConfig, Configurator backspinConfig, Configurator intakeConfig,
+  public ShooterModuleSingle(ModuleConfigurator flywheelConfig, ModuleConfigurator backspinConfig, ModuleConfigurator intakeConfig,
       int shooterIndex) {
     this.flywheelConfig = flywheelConfig;
     this.backspinConfig = backspinConfig;

@@ -2,14 +2,14 @@ package frc.robot.subsystems.Shooter.Modules;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 
-public final class Configurator {
+public final class ModuleConfigurator {
     private final Slot0Configs slotConfig;
     private final int motorLeftId;
     private final int motorRightId;
     private final boolean isInverted;
     private final boolean isCoast;
     private final double currentLimit;
-    public Configurator(
+    public ModuleConfigurator(
             Slot0Configs slotConfig,
             int motorId,
             boolean isInverted,
@@ -23,7 +23,7 @@ public final class Configurator {
         this.isCoast = isCoast;
         this.currentLimit = currentLimit;
     }
-    public Configurator(
+    public ModuleConfigurator(
             Slot0Configs slotConfig,
             int motorLeftId,
             int motorRightId,
@@ -62,6 +62,10 @@ public final class Configurator {
 
     public double getCurrentLimit() {
         return currentLimit;
+    }
+
+    public ModuleConfigurator apply(Slot0Configs slot){
+        return new ModuleConfigurator(slot, motorLeftId, isInverted, isCoast, currentLimit) ;
     }
 
 }

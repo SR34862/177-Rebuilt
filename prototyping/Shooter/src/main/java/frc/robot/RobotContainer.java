@@ -58,8 +58,7 @@ public class RobotContainer {
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        m_shooter = new Shooter(new ShooterIO() {
-        });
+        m_shooter = new Shooter(new ShooterReal());
         break;
 
       default:

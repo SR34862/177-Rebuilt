@@ -38,13 +38,13 @@ public class ShooterModuleDual implements ShooterModuleInterface {
   private StatusSignal<Current> statorCurrentOfBackspinAmps;
   private StatusSignal<Current> statorCurrentofIntakeAmps;
 
-  public Configurator flywheelConfig;
-  public Configurator backspinConfig;
-  public Configurator intakeConfig;
+  public ModuleConfigurator flywheelConfig;
+  public ModuleConfigurator backspinConfig;
+  public ModuleConfigurator intakeConfig;
 
   public int shooterIndex;
 
-  public ShooterModuleDual(Configurator flywheelConfig, Configurator backspinConfig, Configurator intakeConfig,
+  public ShooterModuleDual(ModuleConfigurator flywheelConfig, ModuleConfigurator backspinConfig, ModuleConfigurator intakeConfig,
       int shooterIndex) {
     this.flywheelConfig = flywheelConfig;
     this.backspinConfig = backspinConfig;
